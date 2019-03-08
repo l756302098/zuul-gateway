@@ -23,7 +23,7 @@ public class IPBlackFilter  extends ZuulFilter{
     }
 
     public int filterOrder(){
-        return -200;
+        return 200;
     }
 
     @Override

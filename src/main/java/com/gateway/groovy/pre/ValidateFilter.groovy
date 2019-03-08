@@ -27,7 +27,7 @@ public class ValidateFilter  extends ZuulFilter{
 
     @Override
     public int filterOrder() {
-        return -190;
+        return 210;
     }
 
     @Override
@@ -94,7 +94,7 @@ public class ValidateFilter  extends ZuulFilter{
 
             Long timestamp = Long.valueOf(tsp);
             Long interval = (System.currentTimeMillis() - timestamp)/1000;
-            Long apiInterval = Long.parseLong(env.getProperty("api.interval.time"));
+            Long apiInterval = Long.parseLong(EnvUtils.getProperty("api.interval.time"));
 
             logger.info(">> 相差时间 {}",interval);
 
@@ -112,6 +112,7 @@ public class ValidateFilter  extends ZuulFilter{
 
         Map<String, String> params = new HashMap<>();
         for (String key: paramsMap.keySet()) {
+            //logger.warn("key:{} value:{}",key,paramsMap.get(key)[0])
             params.put(key, paramsMap.get(key)[0]);
         }
 

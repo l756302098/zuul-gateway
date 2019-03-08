@@ -29,7 +29,7 @@ public class HealthCheckFilter extends ZuulFilter{
     }
 
     public int filterOrder(){
-        return 0;
+        return 100;
     }
 
     public String responseBody() {
