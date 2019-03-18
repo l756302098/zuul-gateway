@@ -1,36 +1,38 @@
-package com.gateway.groovy.post
+package com.gateway.filter.post;
 
-import com.alibaba.fastjson.JSON
-import com.gateway.model.Result
-import com.gateway.utils.RequestUtil
-import com.gateway.utils.GatewayCodeEnum
-import com.netflix.zuul.ZuulFilter
-import com.netflix.zuul.context.RequestContext
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.cloud.netflix.zuul.filters.support.FilterConstants
-import org.springframework.util.StreamUtils
+import com.alibaba.fastjson.JSON;
+import com.gateway.model.Result;
+import com.gateway.utils.GatewayCodeEnum;
+import com.gateway.utils.RequestUtil;
+import com.netflix.zuul.ZuulFilter;
+import com.netflix.zuul.context.RequestContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cloud.netflix.zuul.filters.support.FilterConstants;
+import org.springframework.util.StreamUtils;
 
-import javax.servlet.http.HttpServletRequest
-import java.nio.charset.Charset
+import javax.servlet.http.HttpServletRequest;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.Map;
 
-class DebugFilter  extends ZuulFilter {
+public class DebugFilter   extends ZuulFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(DebugFilter.class);
     private static boolean isDebug = true;
 
     @Override
-    String filterType() {
+    public String filterType() {
         return FilterConstants.POST_TYPE;
     }
 
     @Override
-    int filterOrder() {
-        return 1000
+    public int filterOrder() {
+        return 1000;
     }
 
     @Override
-    boolean shouldFilter() {
+    public boolean shouldFilter() {
         return true;
     }
 
@@ -105,13 +107,12 @@ class DebugFilter  extends ZuulFilter {
     public String printArray(String[] arr) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < arr.length; i++) {
-           sb.append(arr[i]);
+            sb.append(arr[i]);
             if (i < arr.length - 1) {
                 sb.append(",");
             }
         }
         return sb.toString();
     }
-
 
 }

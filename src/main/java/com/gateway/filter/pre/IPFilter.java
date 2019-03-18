@@ -1,11 +1,14 @@
 package com.gateway.filter.pre;
 
 
+import com.gateway.utils.RedisUtils;
+import com.gateway.utils.GatewayCodeEnum;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.netflix.zuul.filters.support.FilterConstants;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -24,12 +27,12 @@ public class IPFilter  extends ZuulFilter {
 
     @Override
     public String filterType() {
-        return "pre";
+        return FilterConstants.PRE_TYPE;
     }
 
     @Override
     public int filterOrder() {
-        return -200;
+        return 200;
     }
 
     @Override
@@ -45,12 +48,13 @@ public class IPFilter  extends ZuulFilter {
         logger.info("请求IP地址为：[{}]",ipAddr);
         //redisTemplate.opsForSet().add("IPBLACKSET",ipAddr);
         //配置本地IP白名单，生产环境可放入数据库或者redis中
-        Set<String> resultSet = redisTemplate.opsForSet().members("IPBLACKSET");
-        logger.info("resultSet：{}",resultSet);
-        if(resultSet.contains(ipAddr)){
+        if(RedisUtils.isMember("IPBLACKSET",ipAddr)){
             ctx.setResponseStatusCode(401);
             ctx.setSendZuulResponse(false);
-            ctx.setResponseBody("IpAddr is forbidden!");
+            ctx.set("isSuccess", false);
+            ctx.set("resultCode", GatewayCodeEnum.IP_FORBIDDEN.getValue());
+            logger.error("IP 在黑名单中");
+            return null;
         }
 
         logger.info("IP校验通过。");

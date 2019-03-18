@@ -5,6 +5,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Component
@@ -15,13 +17,16 @@ public class RedisUtils {
 
     private static RedisUtils redisUtils;
 
-    public static Set<String> getSet(String key){
-        Set<String> resultSet = redisUtils.redisTemplate.opsForSet().members(key);
-        return  resultSet;
-    }
-
     public static Boolean isMember(String key,String value){
         return redisUtils.redisTemplate.opsForSet().isMember(key,value);
+    }
+
+    public static boolean hhasKey(String key, String field){
+        return redisUtils.redisTemplate.opsForHash().hasKey(key,field);
+    }
+
+    public static Object hget(String key, String field){
+        return redisUtils.redisTemplate.opsForHash().get(key,field);
     }
 
     @PostConstruct

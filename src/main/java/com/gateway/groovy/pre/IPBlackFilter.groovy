@@ -1,6 +1,7 @@
 package com.gateway.groovy.pre
 
 import com.gateway.utils.RedisUtils
+import com.gateway.utils.GatewayCodeEnum
 import com.netflix.zuul.ZuulFilter
 import com.netflix.zuul.context.RequestContext
 import org.slf4j.Logger
@@ -34,12 +35,11 @@ public class IPBlackFilter  extends ZuulFilter{
         logger.info("请求IP地址为：[{}]",ipAddr);
         //配置本地IP白名单，生产环境可放入数据库或者redis中
 
-        Set<String> resultSet = RedisUtils.getSet("IPBLACKSET");
-        if(resultSet.contains(ipAddr)){
-            logger.info("resultSet：{}",resultSet);
+        if(RedisUtils.isMember("IPBLACKSET",ipAddr)){
             ctx.setResponseStatusCode(401);
             ctx.setSendZuulResponse(false);
-            ctx.setResponseBody("IpAddr is forbidden!"); ;
+            ctx.set("isSuccess", false);
+            ctx.set("resultCode", GatewayCodeEnum.IP_FORBIDDEN.getValue());
             logger.error("IP 在黑名单中");
             return null;
         }

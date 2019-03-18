@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Enumeration;
 
-@Component
+//@Component
 public class ErrorResponse extends ZuulFilter{
 
     Logger logger= LoggerFactory.getLogger(this.getClass());

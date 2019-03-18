@@ -4,11 +4,13 @@ import com.alibaba.fastjson.JSON
 import com.gateway.utils.EnvUtils
 import com.gateway.utils.RedisUtils
 import com.gateway.utils.RequestUtil
+import com.gateway.utils.GatewayCodeEnum
 import com.gateway.utils.SignParamsUtils
 import com.netflix.zuul.ZuulFilter
 import com.netflix.zuul.context.RequestContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.cloud.netflix.zuul.filters.support.FilterConstants
 import org.springframework.util.StringUtils
 
 import javax.servlet.http.HttpServletRequest
@@ -18,11 +20,11 @@ public class ValidateFilter  extends ZuulFilter{
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static boolean isDebug = true;
-    private static boolean isRepeat = true;
+    private static boolean isRepeat = false;
 
     @Override
     public String filterType() {
-        return "pre";
+        return FilterConstants.PRE_TYPE;
     }
 
     @Override
@@ -51,7 +53,7 @@ public class ValidateFilter  extends ZuulFilter{
 
             //验证URL白名单
             if(RedisUtils.isMember("URLWHITESET", requestURL)){
-                logger.info(">> URL {} is in our white list...");
+                logger.info(">> URL {} is in our white list...",requestURL);
                 return false;
             }
 
@@ -70,7 +72,7 @@ public class ValidateFilter  extends ZuulFilter{
         //获取请求的URL
         String requestURL = req.getRequestURI();
 
-        logger.info("request api filter >>  url: {}, params: {}", requestURL, JSON.toJSON(req.getParameterMap()));
+        logger.info("request api filter >>  url: {}, params: {}", requestURL,JSON.toJSON(req.getParameterMap()));
 
         Map<String , Object> map = new HashMap<>();
         map.put("code", "40010");
@@ -82,15 +84,16 @@ public class ValidateFilter  extends ZuulFilter{
 
         //timestamp, key, sign 为验签必传参数
         if(StringUtils.isEmpty(appKey) || StringUtils.isEmpty(sign) || StringUtils.isEmpty(tsp)){
-            logger.error("验签为空");
+            logger.info("验签为空");
             ctx.setResponseStatusCode(401);
             ctx.setSendZuulResponse(false);
-            ctx.setResponseBody(JSON.toJSON(map).toString());
+            ctx.set("isSuccess", false);
+            ctx.set("resultCode", GatewayCodeEnum.SIGN_NOT_VALID.getValue());
             return null;
         }
 
         //是否开启防重放
-        if(isRepeat){
+        if("true".equalsIgnoreCase("true")){
 
             Long timestamp = Long.valueOf(tsp);
             Long interval = (System.currentTimeMillis() - timestamp)/1000;
@@ -103,7 +106,8 @@ public class ValidateFilter  extends ZuulFilter{
                 //停止请求
                 ctx.setResponseStatusCode(401);
                 ctx.setSendZuulResponse(false);
-                ctx.setResponseBody(JSON.toJSON(map).toString());
+                ctx.set("isSuccess", false);
+                ctx.set("resultCode", GatewayCodeEnum.SIGN_NOT_VALID.getValue());
                 return null;
             }
         }
@@ -112,7 +116,6 @@ public class ValidateFilter  extends ZuulFilter{
 
         Map<String, String> params = new HashMap<>();
         for (String key: paramsMap.keySet()) {
-            //logger.warn("key:{} value:{}",key,paramsMap.get(key)[0])
             params.put(key, paramsMap.get(key)[0]);
         }
 
@@ -132,7 +135,8 @@ public class ValidateFilter  extends ZuulFilter{
             //停止请求
             ctx.setResponseStatusCode(401);
             ctx.setSendZuulResponse(false);
-            ctx.setResponseBody(JSON.toJSON(map).toString());
+            ctx.set("isSuccess", false);
+            ctx.set("resultCode", GatewayCodeEnum.SIGN_NOT_VALID.getValue());
             return null;
         }
 
@@ -143,7 +147,8 @@ public class ValidateFilter  extends ZuulFilter{
             logger.error(">> validate sign is fail url: {}, params: {}",requestURL,JSON.toJSON(req.getParameterMap()));
             ctx.setResponseStatusCode(401);
             ctx.setSendZuulResponse(false);
-            ctx.setResponseBody(JSON.toJSON(map).toString());
+            ctx.set("isSuccess", false);
+            ctx.set("resultCode", GatewayCodeEnum.SIGN_NOT_VALID.getValue());
         }
 
         return null;

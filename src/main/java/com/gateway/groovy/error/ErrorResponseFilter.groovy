@@ -23,6 +23,7 @@ public class ErrorResponseFilter extends ZuulFilter {
     @Override
     boolean shouldFilter() {
         RequestContext ctx = RequestContext.getCurrentContext();
+        logger.info("throwable:{}",ctx.getThrowable());
         return ctx.getThrowable() != null;
     }
 

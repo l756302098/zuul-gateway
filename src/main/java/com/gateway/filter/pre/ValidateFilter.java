@@ -1,13 +1,12 @@
 package com.gateway.filter.pre;
 
-import com.gateway.utils.RedisUtils;
-import com.gateway.utils.RequestUtil;
-import com.gateway.utils.SignParamsUtils;
+import com.gateway.utils.*;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.netflix.zuul.filters.support.FilterConstants;
 import org.springframework.data.redis.core.RedisTemplate;
 import com.alibaba.fastjson.*;
 import javax.servlet.http.HttpServletRequest;
@@ -27,17 +26,15 @@ public class ValidateFilter extends ZuulFilter {
 
     @Autowired
     RedisTemplate redisTemplate;
-    @Autowired
-    private Environment env;
 
     @Override
     public String filterType() {
-        return "pre";
+        return FilterConstants.PRE_TYPE;
     }
 
     @Override
     public int filterOrder() {
-        return -190;
+        return 210;
     }
 
     @Override
@@ -50,7 +47,7 @@ public class ValidateFilter extends ZuulFilter {
         //获取请求的ip地址
         String ip = RequestUtil.getIpAddr(req);
 
-        logger.info("request api filter >> ip: {}, url: {}, params: {}", new Object[]{ip, requestURL, JSON.toJSON(req.getParameterMap())});
+        logger.info("request api filter >> ip: {}, url: {}, params: {}",ip, requestURL, JSON.toJSON(req.getParameterMap()));
 
         //验证ip白名单
         if(RedisUtils.isMember("IPWHITESET", ip)){
@@ -75,7 +72,7 @@ public class ValidateFilter extends ZuulFilter {
         //获取请求的URL
         String requestURL = req.getRequestURI();
 
-        logger.info("request api filter >>  url: {}, params: {}", new Object[]{ requestURL, JSON.toJSON(req.getParameterMap())});
+        logger.info("request api filter >>  url: {}, params: {}", requestURL,JSON.toJSON(req.getParameterMap()));
 
         Map<String , Object> map = new HashMap<>();
         map.put("code", "40010");
@@ -90,7 +87,8 @@ public class ValidateFilter extends ZuulFilter {
             logger.info("验签为空");
             ctx.setResponseStatusCode(401);
             ctx.setSendZuulResponse(false);
-            ctx.setResponseBody(JSON.toJSON(map).toString());
+            ctx.set("isSuccess", false);
+            ctx.set("resultCode", GatewayCodeEnum.SIGN_NOT_VALID.getValue());
             return null;
         }
 
@@ -99,7 +97,7 @@ public class ValidateFilter extends ZuulFilter {
 
             Long timestamp = Long.valueOf(tsp);
             Long interval = (System.currentTimeMillis() - timestamp)/1000;
-            Long apiInterval = Long.parseLong(env.getProperty("api.interval.time"));
+            Long apiInterval = Long.parseLong(EnvUtils.getProperty("api.interval.time"));
 
             logger.info(">> 相差时间 {}",interval);
 
@@ -108,7 +106,8 @@ public class ValidateFilter extends ZuulFilter {
                 //停止请求
                 ctx.setResponseStatusCode(401);
                 ctx.setSendZuulResponse(false);
-                ctx.setResponseBody(JSON.toJSON(map).toString());
+                ctx.set("isSuccess", false);
+                ctx.set("resultCode", GatewayCodeEnum.SIGN_NOT_VALID.getValue());
                 return null;
             }
         }
@@ -120,23 +119,24 @@ public class ValidateFilter extends ZuulFilter {
             params.put(key, paramsMap.get(key)[0]);
         }
 
-        String androidAppKey = env.getProperty("api.adroid.appKey");
-        String iosAppKey = env.getProperty("api.ios.appKey");
-        String wxAppKey = env.getProperty("api.wx.appKey");
+        String androidAppKey = EnvUtils.getProperty("api.adroid.appKey");
+        String iosAppKey = EnvUtils.getProperty("api.ios.appKey");
+        String wxAppKey = EnvUtils.getProperty("api.wx.appKey");
         String appSecret = null;
 
         if(androidAppKey.equals(appKey)){
-            appSecret =  env.getProperty("api.adroid.appSecret");
+            appSecret =  EnvUtils.getProperty("api.adroid.appSecret");
         }else if(iosAppKey.equals(appKey)){
-            appSecret =  env.getProperty("api.ios.appSecret");
+            appSecret =  EnvUtils.getProperty("api.ios.appSecret");
         }else if(wxAppKey.equals(appKey)){
-            appSecret =  env.getProperty("api.wx.appSecret");
+            appSecret =  EnvUtils.getProperty("api.wx.appSecret");
             logger.info("requet api platform is weixin.");
         }else {
            //停止请求
             ctx.setResponseStatusCode(401);
             ctx.setSendZuulResponse(false);
-            ctx.setResponseBody(JSON.toJSON(map).toString());
+            ctx.set("isSuccess", false);
+            ctx.set("resultCode", GatewayCodeEnum.SIGN_NOT_VALID.getValue());
             return null;
         }
 
@@ -147,7 +147,8 @@ public class ValidateFilter extends ZuulFilter {
             logger.error(">> validate sign is fail url: {}, params: {}",requestURL,JSON.toJSON(req.getParameterMap()));
             ctx.setResponseStatusCode(401);
             ctx.setSendZuulResponse(false);
-            ctx.setResponseBody(JSON.toJSON(map).toString());
+            ctx.set("isSuccess", false);
+            ctx.set("resultCode", GatewayCodeEnum.SIGN_NOT_VALID.getValue());
         }
 
         return null;

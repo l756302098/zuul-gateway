@@ -1,5 +1,4 @@
-# zuul-gateway
-基于netflix-zuul开发的网关
+# Spring Cloud Zuul（卡王贷网关）  
 
 ## 目的  
 利用Spring Cloud Zuul网关逐渐完善微服务框架，达到以下目标  
@@ -22,3 +21,6 @@
 为了维护方便，将spring cloud 项目与阿里云的EDAS集成，与SLB打通，实现自动化  
 主要集成alicloud-ans 和 alibaba-nacos-config  
 前者主要替换注册中心，简单易用，后者主要实现动态刷新路由和配置文件
+
+
+
